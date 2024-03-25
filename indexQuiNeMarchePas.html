@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js GLB Scene</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.135.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.135.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script>
+        // Initialize Three.js scene
+        let mixer;
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Add light to the scene
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        directionalLight.position.set(10, 10, 10);
+        scene.add(directionalLight);
+
+        // Load GLB model
+        const loader = new THREE.GLTFLoader();
+        loader.load(
+          'Business Man.glb',
+            function (gltf) {
+                const model = gltf.scene;
+                scene.add(model);
+                console.log(model)
+                const animations = gltf.animations;
+                console.log(animations)
+                console.log(animations[0])
+                if (animations && animations.length) {
+                    console.log("yes")
+                    mixer = new THREE.AnimationMixer(model);
+                    const firstAnimation = animations[0];
+                    const action = mixer.clipAction(firstAnimation);
+                    action.play();
+                }
+            },
+            undefined,
+            function (error) {
+                console.error(error);
+            }
+        );
+
+        // Set camera position
+        camera.position.z = 5;
+        let previousTime = 0;
+        // Render loop
+        function animate(currentTime) {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+            const deltaTime = (currentTime - previousTime) * 0.001; // Convert to seconds
+            previousTime = currentTime;
+
+            if (mixer) {
+              mixer.update(deltaTime);
+            }
+        }
+        animate(0);
+    </script>
+</body>
+</html>
