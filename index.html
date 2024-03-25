@@ -1,90 +1,198 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Balthazar Chevalley-Portfolio</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Three.js Sample Scene</title>
     <style>
-        /* CSS Styles */
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #000;
-            color: #fff;
-        }
-
-        header {
-            background-color: #111;
-            padding: 20px;
-            text-align: center;
-        }
-
-        header h1 {
-            margin: 0;
-            text-shadow: 0px 0px 0px rgba(255, 255, 255, 0.9); /* Larger text shadow */
-        }
-
-        nav ul {
-            list-style-type: none;
-            padding: 0;
-        }
-
-        nav ul li {
-            display: inline;
-            margin-right: 20px;
-        }
-
-        nav ul li a {
-            text-decoration: none;
-            color: #fff;
-        }
-
-        section {
-            padding: 40px;
-        }
-
-        footer {
-            text-align: center;
-            padding: 20px;
-            background-color: #111;
-            color: #fff;
-        }
+      body {
+        margin: 0;
+      }
+      canvas {
+        display: block;
+      }
     </style>
-</head>
-<body>
-    <header>
-        <h1>Balthazar Chevalley</h1>
-        <nav>
-            <ul>
-                <li><a href="#about">About</a></li>
-                <li><a href="#portfolio">Portfolio</a></li>
-                <li><a href="#contact">Contact</a></li>
-            </ul>
-        </nav>
-    </header>
+  </head>
+  <body>
+    <div id="text-container"></div>
+    <div id="button-container"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/GLTFLoader.js"></script>
 
-    <section id="about">
-        <h2>About Me</h2>
-        <p>I'm Balthazar Chevalley, a 16-year-old on a mission to develop my skills. Welcome!
+    <script type="module">
+      // Initialize Three.js scene
+      console.log("tet");
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xffffff);
+      import maBaseDeDonnees from "./indexed.js";
+      import ess from "./essai.js";
+      import maBaseDeDonneesJs from "./indexed2.js";
+      import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+      import { GUI } from "three/addons/libs/lil-gui.module.min.js";
 
-I'm passionate about self-improvement and love tackling new challenges. My website is a window into my journey, where I explore diverse interests, from tech and art to literature and science. Together, we can learn and grow, supporting each other along the way.
+      let character,
+        p = [0, 0],
+        bool = true,
+        mixer,
+        clock = new THREE.Clock();
 
-Join me as I embrace the ever-changing world of personal development. Let's inspire one another and make the most of life's opportunities.</p>
-    </section>
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000,
+      );
+      camera.position.z = 5;
+      var light = new THREE.AmbientLight(0xffffff);
+      scene.add(light);
 
-    <section id="portfolio">
-        <h2>Portfolio</h2>
-        <!-- Add your projects here -->
-    </section>
+      console.log("tet");
+      // Create renderer
+      const renderer = new THREE.WebGLRenderer();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
 
-    <section id="contact">
-        <h2>Contact Me</h2>
-        <p>Email: balthazar.chevalley@gmail.com</p>
-    </section>
+      console.log("test");
 
-    <footer>
-        <p>&copy; 2023 Balthazar Chevalley</p>
-    </footer>
-</body>
+      //intit-------------------
+      //intit-------------------
+      // Function to initialize
+      function init() {
+        console.log("game");
+        maBaseDeDonnees.open().catch(function (error) {
+          console.error(
+            "Erreur lors de l'ouverture de la base de données: " + error,
+          );
+        });
+        var queryString = window.location.search;
+        var urlParams = new URLSearchParams(queryString);
+        var Variable = urlParams.get("variable");
+        var myVariable = Number(Variable);
+        console.log(myVariable);
+        maBaseDeDonnees.fichiers3D
+          .get(myVariable)
+          .then(function (file) {
+            if (file) {
+              console.log(file);
+              var meuble = JSON.parse(file.fichier);
+
+              meuble.forEach((tiroir) => {
+                var script = tiroir.jsId;
+                var objet = Number(tiroir.id);
+                var position = tiroir.position;
+                var direction = tiroir.direction;
+                console.log(objet);
+                maBaseDeDonnees.fichiers3D.get(objet).then(function (file3D) {
+                  const loader = new GLTFLoader();
+
+                  if (file3D) {
+                    console.log(file3D, "file3D");
+                    var model = file3D.fichier;
+                    var blob = new Blob([model]);
+                    const url = URL.createObjectURL(blob);
+                    const reader = new FileReader();
+
+                    loader.load(
+                      url,
+                      (gltf) => {
+                        const modelScene = gltf.scene;
+
+                        modelScene.position.set(
+                          position.x,
+                          position.y,
+                          position.z,
+                        );
+
+                        console.log(direction);
+                        const yaw = Math.atan2(direction.x, direction.z);
+                        const pitch = Math.asin(-direction.y);
+
+                        // Calculate roll angle based on additional information, or set it to a fixed value
+                        const roll = Math.PI / 4; // Example: setting roll to 45 degrees (in radians)
+
+                        modelScene.rotation.set(pitch, yaw, 0);
+
+                        maBaseDeDonneesJs.fichiersJs
+                          .get(script)
+                          .then(function (fileJs) {
+                            var reader = new FileReader();
+                            console.log("-jsp_");
+                            console.log(fileJs.fichier);
+                            const scriptContent = fileJs.fichier;
+                            console.log(scriptContent);
+                            scriptContent.text().then(function (texte) {
+                              console.log(texte);
+                              const functionName = "function";
+                              window[functionName] = new Function(
+                                "object",
+                                "camera",
+                                "container",
+                                "tee",
+                                "containerT",
+                                texte,
+                              );
+                              window[functionName](
+                                modelScene,
+                                camera,
+                                document.getElementById("button-container"),
+                                "hellow ",
+                                document.getElementById("text-container"),
+                              );
+                            });
+                          });
+                        scene.add(gltf.scene);
+                        const animations = gltf.animations;
+                        console.log(animations[0])
+                        console.log(animations,"animations")
+                        // Access animations from the loaded GLTF
+                        mixer = new THREE.AnimationMixer(gltf.scene);
+                        console.log(gltf, "gltf");
+
+                        const action = mixer.clipAction(animations[0]);
+                        action.play();
+                      },
+                      undefined,
+                      function (error) {
+                        console.error("Error loading GLTF model:", error);
+                      },
+                    );
+
+                    console.log(model);
+                    console.log("---");
+                  }
+                });
+              });
+            } else {
+              console.log("Aucun fichier trouvé avec l'ID : " + file);
+            }
+          })
+          .catch(function (error) {
+            console.error(
+              "Erreur lors de la récupération du fichier : " + error,
+            );
+          });
+      }
+
+      init();
+
+      let previousTime = 0;
+
+      function animate(currentTime) {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+        const deltaTime = (currentTime - previousTime) * 0.001; // Convert to seconds
+        previousTime = currentTime;
+
+        if (mixer) {
+          mixer.update(deltaTime);
+        }
+
+        // Render the scene
+
+       
+      }
+
+      animate(0);
+    </script>
+  </body>
 </html>
